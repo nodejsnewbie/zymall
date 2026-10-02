@@ -16,7 +16,7 @@ import { ProfileTab } from './components/ProfileTab';
 import { BottomNav } from './components/BottomNav';
 import { PRODUCTS, AGRONOMISTS, SERVICE_STATIONS } from './data/mockData';
 import { Product, CartItem, ServiceBooking, TraceVerificationResult } from './types';
-import { verifyTraceCode } from './utils/traceUtils';
+import { api } from './services/api';
 import { CheckCircle2, ShieldCheck, Smartphone, Maximize2 } from 'lucide-react';
 
 export default function App() {
@@ -111,8 +111,9 @@ export default function App() {
   }, [selectedCategory, searchQuery]);
 
   // Handlers
-  const handleVerify = (code: string) => {
-    const res = verifyTraceCode(code);
+  const handleVerify = async (code: string) => {
+    showToast('正在向国家农药电子追溯系统验证...');
+    const res = await api.verifyTraceCode(code);
     setTraceResult(res);
     if (res.isValid) {
       showToast('溯源验真成功：原厂正品入库在档');
@@ -160,7 +161,9 @@ export default function App() {
     showToast('采购清单已清空');
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
+    showToast('正在提交实体站闪送订单...');
+    const result = await api.createOrder(cart);
     showToast('下单成功！长沙县安沙直营站正准备闪送发货...');
     setCartOpen(false);
     setCart([]);
@@ -171,8 +174,10 @@ export default function App() {
     setBookingModalOpen(true);
   };
 
-  const handleSubmitBooking = (newBooking: ServiceBooking) => {
-    setBookings((prev) => [newBooking, ...prev]);
+  const handleSubmitBooking = async (newBooking: ServiceBooking) => {
+    showToast('正在向自营服务站调度派单...');
+    const created = await api.createBooking(newBooking);
+    setBookings((prev) => [created, ...prev]);
     showToast('上门施用预约成功！农艺师将致电确认');
     setCurrentTab('doorstep');
   };
